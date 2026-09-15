@@ -1,5 +1,6 @@
 const productModel = require('../model/productModel');
 const userModel = require('../model/userModel');
+const cloudinary = require('../config/cloudinary');
 /*
 create : upload product
 get all : get all products
@@ -15,13 +16,31 @@ const uploadProduct = async (req, res) => {
         const { name, description, price, category, availability, quantity, image } = req.body;
        if (!getUser) {
             return res.status(404).json({ 
-                message: 'User not found' });
+                message: 'User not found'
+             });
        }
+
+       if(!req.file){
+        return res.status(400).json({
+            message : "Image is required... please upload an image"
+        })
+       }
+
+        const result = await cloudinary.uploader.upload(req.file.path)
+        
+        const imageUrl = result.secure_url
+
+
+
         const product = await productModel.create({ 
             name, description, price, category, availability, quantity, image 
         });
+
+
         getUser.products.push(product._id)
+
         await getUser.save();
+
         return res.status(201).json({ 
             message: 'Product uploaded successfully', 
             data: product 
